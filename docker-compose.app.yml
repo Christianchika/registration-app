@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/registration-frontend:latest
+    container_name: frontend
+    ports:
+      - "9090:3000"
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/registration-backend:latest
+    container_name: backend
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-me}
+    ports:
+      - "9091:8000"
+    restart: always
+
+  # Optional Postgres
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=registration
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
