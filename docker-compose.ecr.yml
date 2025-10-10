@@ -1,31 +1,45 @@
+version: '3.8'
+
 services:
-  frontend:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/registration-frontend:latest
-    ports:
-      - "9090:3000"
-    depends_on:
-      - backend
-    # Note: REACT_APP_API_URL is baked at build time. Ensure the image was built
-    # with the correct REACT_APP_API_URL pointing to the backend's public URL.
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: reguser
+      POSTGRES_PASSWORD: regpass
+      POSTGRES_DB: registrationdb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   backend:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/registration-backend:latest
-    ports:
-      - "9091:8000"
+    build: ./backend
+    depends_on:
+      - db
     environment:
-      - SECRET_KEY=${SECRET_KEY:-change-me}
-      # Optional DB configuration (unused by current in-memory backend)
-      # - DATABASE_URL=postgresql://postgres:postgres@db:5432/magax
+      DB_HOST: db
+      DB_USER: reguser
+      DB_PASSWORD: regpass
+      DB_NAME: registrationdb
+      DB_PORT: 5432
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
 
-# Optional Postgres (uncomment to use, and enable DB usage in the app)
-#  db:
-#    image: postgres:13
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=postgres
-#      - POSTGRES_DB=magax
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
 
-#volumes:
-#  postgres_data:
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
