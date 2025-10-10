@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   nginx-proxy:
-    build: .
+    image: nginx:latest
     container_name: nginx-proxy
     ports:
       - "80:80"
@@ -10,5 +8,6 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot   # <-- Add this line
     restart: always
 
