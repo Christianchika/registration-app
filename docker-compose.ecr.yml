@@ -1,6 +1,31 @@
 version: "3.8"
 
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: $ECR_REGISTRY/registration-app-backend:latest
+    container_name: registration-app_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/registration
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: $ECR_REGISTRY/registration-app-frontend:latest
+    container_name: registration-app_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+
   db:
     image: postgres:15
     container_name: registration-app_db
@@ -12,34 +37,8 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-    restart: always
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: registration-app_backend
-    depends_on:
-      - db
-    environment:
-      PORT: 8000
-      DATABASE_URL: postgres://postgres:postgres@db:5432/registration
-    ports:
-      - "8000:8000"
-    restart: always
-    command: ["gunicorn", "--bind", "0.0.0.0:8000", "main:app"]
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: registration-app_frontend
-    ports:
-      - "3000:80"  # Nginx serving the frontend
-    depends_on:
-      - backend
-    restart: always
 
 volumes:
   db_data:
+
 
