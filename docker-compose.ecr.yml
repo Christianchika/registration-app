@@ -1,45 +1,45 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
-    image: postgres:16-alpine
-    restart: always
+    image: postgres:15
+    container_name: registration-app_db
     environment:
-      POSTGRES_USER: reguser
-      POSTGRES_PASSWORD: regpass
-      POSTGRES_DB: registrationdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: registration
+    ports:
+      - "5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
-    networks:
-      - app-network
+      - db_data:/var/lib/postgresql/data
+    restart: always
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: registration-app_backend
     depends_on:
       - db
     environment:
-      DB_HOST: db
-      DB_USER: reguser
-      DB_PASSWORD: regpass
-      DB_NAME: registrationdb
-      DB_PORT: 5432
+      PORT: 8000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/registration
     ports:
       - "8000:8000"
-    networks:
-      - app-network
+    restart: always
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "main:app"]
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: registration-app_frontend
+    ports:
+      - "3000:80"  # Nginx serving the frontend
     depends_on:
       - backend
-    ports:
-      - "3000:80"
-    networks:
-      - app-network
+    restart: always
 
 volumes:
-  db-data:
+  db_data:
 
-networks:
-  app-network:
-    driver: bridge
