@@ -1,13 +1,29 @@
+version: "3.9"
+
 services:
   nginx-proxy:
-    image: nginx:latest
+    image: nginx:alpine
     container_name: nginx-proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt
-      - /var/www/certbot:/var/www/certbot   # <-- Add this line
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
     restart: always
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew --webroot -w /var/www/certbot --quiet; done;'"
+    restart: always
+
+volumes:
+  certbot-etc:
+  certbot-www:
+
 
